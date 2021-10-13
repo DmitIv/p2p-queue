@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/libp2p/go-libp2p"
+	autonat "github.com/libp2p/go-libp2p-autonat"
 	"github.com/libp2p/go-libp2p-core/host"
 	peerstore "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/multiformats/go-multiaddr"
@@ -14,6 +15,8 @@ type QueueClient struct {
 	SelfID        peerstore.ID
 
 	h            host.Host
+	dialback     host.Host
+	autoNAT      autonat.AutoNAT
 	qmdns        *QueueMDNS
 	queueGateway *QueueGateway
 }
@@ -42,6 +45,14 @@ func NewQueueClient(ctx context.Context, addresses ...string) (qc *QueueClient, 
 		Addrs: qc.h.Addrs(),
 	}
 	if qc.HostAddresses, err = peerstore.AddrInfoToP2pAddrs(&peerInfo); err != nil {
+		return nil, err
+	}
+
+	if qc.dialback, err = libp2p.New(ctx, libp2p.NoListenAddrs); err != nil {
+		return nil, err
+	}
+
+	if qc.autoNAT, err = autonat.New(ctx, qc.h, autonat.EnableService(qc.dialback.Network())); err != nil {
 		return nil, err
 	}
 
