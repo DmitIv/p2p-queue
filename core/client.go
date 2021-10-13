@@ -23,6 +23,7 @@ func NewQueueClient(ctx context.Context, addresses ...string) (qc *QueueClient, 
 	if qc.h, err = libp2p.New(
 		ctx,
 		libp2p.ListenAddrStrings(addresses...),
+		libp2p.EnableNATService(),
 	); err != nil {
 		return nil, err
 	}
